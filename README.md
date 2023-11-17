@@ -1,4 +1,4 @@
-# Lucia Playground
+![Demo](./demo.png)
 
 This is a playground for [Lucia](https://lucia-auth.com/) that allows you to test out the functionality of the library.
 
