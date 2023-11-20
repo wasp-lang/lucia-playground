@@ -5,24 +5,44 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export function signUp({
+export function signUpWithEmail({
   email,
   password,
 }: {
   email: string;
   password: string;
 }) {
-  return api.post("/auth/signup", { email, password });
+  return api.post("/auth/signup/email", { email, password });
 }
 
-export function login({
+export function loginWithEmail({
   email,
   password,
 }: {
   email: string;
   password: string;
 }) {
-  return api.post("/auth/login", { email, password });
+  return api.post("/auth/login/email", { email, password });
+}
+
+export function signUpWithUsername({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
+}) {
+  return api.post("/auth/signup/username", { username, password });
+}
+
+export function loginWithUsername({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
+}) {
+  return api.post("/auth/login/username", { username, password });
 }
 
 export function logout() {

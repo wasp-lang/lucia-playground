@@ -27,10 +27,11 @@
   "dependencies": {
     "@lucia-auth/adapter-prisma": "^3.0.2",
     "@lucia-auth/oauth": "^3.5.0",
+    "lucia": "^2.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "lucia": "^2.7.4",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zod-express": "^0.0.8"
   }
 }

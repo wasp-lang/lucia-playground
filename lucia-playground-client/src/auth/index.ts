@@ -4,9 +4,15 @@ import { AxiosError } from "axios";
 
 export function useAuth() {
   return {
-    useLogin,
+    email: {
+      useSignUp: useEmailSignUp,
+      useLogin: useEmailLogin,
+    },
+    username: {
+      useSignUp: useUsernameSignUp,
+      useLogin: useUsernameLogin,
+    },
     useLogout,
-    useSignUp,
     useGetUser,
   };
 }
@@ -27,11 +33,11 @@ function useGetUser() {
   });
 }
 
-function useSignUp() {
+function useEmailSignUp() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: api.signUp,
+    mutationFn: api.signUpWithEmail,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
@@ -40,11 +46,37 @@ function useSignUp() {
   });
 }
 
-function useLogin() {
+function useEmailLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: api.login,
+    mutationFn: api.loginWithEmail,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [getUsersQueryKey],
+      });
+    },
+  });
+}
+
+function useUsernameSignUp() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.signUpWithUsername,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [getUsersQueryKey],
+      });
+    },
+  });
+}
+
+function useUsernameLogin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.loginWithUsername,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
@@ -62,9 +94,6 @@ function useLogout() {
       queryClient.removeQueries({
         queryKey: [getUsersQueryKey],
       });
-      // queryClient.invalidateQueries({
-      //   queryKey: [getUsersQueryKey],
-      // });
     },
   });
 }

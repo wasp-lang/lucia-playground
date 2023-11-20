@@ -21,6 +21,12 @@ const envSchema = z.object({
   DISCORD_CLIENT_SECRET: z.string({
     required_error: "DISCORD_CLIENT_SECRET is required",
   }),
+  SERVER_URL: z.string({
+    required_error: "SERVER_URL is required",
+  }),
+  CLIENT_URL: z.string({
+    required_error: "CLIENT_URL is required",
+  }),
 });
 
 function tryToParseEnv() {
