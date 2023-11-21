@@ -38,7 +38,7 @@ export function setupRequestPasswordReset(router: Router) {
 
         return res.status(200).json({
           success: true,
-          message: "Password reset email sent",
+          message: `Reset your password at ${env.CLIENT_URL}/reset-password?token=${token}`,
         });
       } catch (e) {
         if (

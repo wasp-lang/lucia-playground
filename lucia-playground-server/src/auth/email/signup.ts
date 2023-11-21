@@ -75,12 +75,13 @@ export function setupSignup(router: Router) {
 
           return res.status(200).json({
             success: true,
-            message: "Please check your email to verify your account",
+            message: `Verify your email at ${env.SERVER_URL}/auth/verify-email?token=${token}`,
           });
         } else {
           await putUserInSession(user.userId, req, res);
           return res.status(200).json({
             success: true,
+            message: "Signed up successfully",
           });
         }
       } catch (e) {

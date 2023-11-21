@@ -23,8 +23,8 @@ export function SignupForm() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await signUp.mutateAsync(data);
-      setSuccess("Successfully signed up!");
+      const response = await signUp.mutateAsync(data);
+      setSuccess(response.data.message);
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");
@@ -92,11 +92,11 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await login.mutateAsync({
+      const response = await login.mutateAsync({
         email: data.email,
         password: data.password,
       });
-      setSuccess("Successfully logged in!");
+      setSuccess(response.data.message);
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");
@@ -163,10 +163,10 @@ export function RequestPasswordReset() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await requestPasswordReset.mutateAsync({
+      const response = await requestPasswordReset.mutateAsync({
         email: data.email,
       });
-      setSuccess("Check your email");
+      setSuccess(response.data.message);
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");
@@ -224,11 +224,11 @@ export function ResetPassword() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await resetPassword.mutateAsync({
+      const response = await resetPassword.mutateAsync({
         token: token,
         password: data.newPassword,
       });
-      setSuccess("Password changed successfully!");
+      setSuccess(response.data.message);
       // Remove token from URL
       setToken("");
       // Go to /

@@ -7,7 +7,7 @@ set -o pipefail
 CAPROVER_URL=https://captain.apps.twoducks.dev
 SERVER_APP=lucia-server
 CLIENT_APP=lucia-client
-IS_DEPLOYING_SERVER=false
+IS_DEPLOYING_SERVER=true
 IS_DEPLOYING_CLIENT=true
 
 if [ "$IS_DEPLOYING_SERVER" = true ] ; then

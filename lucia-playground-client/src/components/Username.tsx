@@ -22,8 +22,8 @@ export function SignupForm() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await signUp.mutateAsync(data);
-      setSuccess("Successfully signed up!");
+      const response = await signUp.mutateAsync(data);
+      setSuccess(response.data.message);
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");
@@ -90,8 +90,8 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       clear();
-      await login.mutateAsync(data);
-      setSuccess("Successfully logged in!");
+      const response = await login.mutateAsync(data);
+      setSuccess(response.data.message);
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");

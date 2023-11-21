@@ -41,6 +41,7 @@ export function setupSignup(router: Router) {
 
         return res.status(200).json({
           success: true,
+          message: "Signed up successfully",
         });
       } catch (e) {
         if (

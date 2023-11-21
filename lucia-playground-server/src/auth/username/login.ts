@@ -31,6 +31,7 @@ export function setupLogin(router: Router) {
 
         return res.status(200).json({
           success: true,
+          message: "Logged in successfully",
         });
       } catch (e) {
         if (
