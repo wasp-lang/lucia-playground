@@ -23,6 +23,10 @@ model User {
 model Auth {
   id String @id @unique
 
+  isEmailVerified         Boolean   @default(false)
+  emailVerificationSentAt DateTime?
+  passwordResetSentAt     DateTime?
+
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 

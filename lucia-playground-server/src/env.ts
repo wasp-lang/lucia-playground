@@ -27,6 +27,9 @@ const envSchema = z.object({
   CLIENT_URL: z.string({
     required_error: "CLIENT_URL is required",
   }),
+  JWT_SECRET: z.string({
+    required_error: "JWT_SECRET is required",
+  }),
 });
 
 function tryToParseEnv() {

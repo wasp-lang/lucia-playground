@@ -14,6 +14,9 @@ import { setupCurrentUser } from "./auth/user.js";
 import { setupGoogle } from "./auth/oauth/google.js";
 import { setupGithub } from "./auth/oauth/github.js";
 import { setupDiscord } from "./auth/oauth/discord.js";
+import { setupRequestPasswordReset } from "./auth/email/requestPasswordReset.js";
+import { setupResetPassword } from "./auth/email/resetPassword.js";
+import { setupVerifyEmail } from "./auth/email/verifyEmail.js";
 
 const app = express();
 
@@ -40,6 +43,9 @@ setupLogout(authRouter);
 // Email auth
 setupEmailSignup(authRouter);
 setupEmailLogin(authRouter);
+setupVerifyEmail(authRouter);
+setupRequestPasswordReset(authRouter);
+setupResetPassword(authRouter);
 
 // Username auth
 setupUsernameSignup(authRouter);

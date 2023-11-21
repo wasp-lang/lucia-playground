@@ -32,6 +32,12 @@ function App() {
               <Tabs.Item title="Signup with Email">
                 <Email.SignupForm />
               </Tabs.Item>
+              <Tabs.Item title="Request password reset">
+                <Email.RequestPasswordReset />
+              </Tabs.Item>
+              <Tabs.Item title="Reset password">
+                <Email.ResetPassword />
+              </Tabs.Item>
               <Tabs.Item active title="Login with Username">
                 <Username.LoginForm />
               </Tabs.Item>

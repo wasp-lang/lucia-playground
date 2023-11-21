@@ -5,6 +5,7 @@ import { Button, Label, TextInput } from "flowbite-react";
 import { useAuth } from "../auth";
 import { Status, useStatus } from "./Status";
 import { getFirstZodValidationError, isZodValidationError } from "../utils";
+import { useState } from "react";
 
 export function SignupForm() {
   const auth = useAuth();
@@ -142,6 +143,145 @@ export function LoginForm() {
         />
       </div>
       <Button type="submit">Login</Button>
+    </form>
+  );
+}
+
+export function RequestPasswordReset() {
+  const auth = useAuth();
+  const requestPasswordReset = auth.email.useRequestPasswordReset();
+  const { error, setError, success, setSuccess, clear } = useStatus();
+
+  const {
+    formState: { errors },
+    register,
+    handleSubmit,
+  } = useForm<{
+    email: string;
+  }>();
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      clear();
+      await requestPasswordReset.mutateAsync({
+        email: data.email,
+      });
+      setSuccess("Check your email");
+    } catch (e: unknown) {
+      if (!(e instanceof AxiosError && e.response)) {
+        setError("Something went wrong.");
+        return;
+      }
+      if (isZodValidationError(e.response.data)) {
+        setError(getFirstZodValidationError(e.response.data));
+      } else {
+        const error = e.response.data;
+        setError(error.message);
+      }
+    }
+  });
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Status error={error} success={success} />
+      <div className="flex flex-col">
+        <div className="mb-2 block">
+          <Label htmlFor="email">Email</Label>
+        </div>
+        <TextInput
+          type="email"
+          id="email"
+          color={errors && errors.email && "failure"}
+          helperText={errors && errors.email && "Email is required"}
+          {...register("email", {
+            required: true,
+          })}
+        />
+      </div>
+      <Button type="submit">Request password reset</Button>
+    </form>
+  );
+}
+
+export function ResetPassword() {
+  const auth = useAuth();
+  const resetPassword = auth.email.usePasswordReset();
+  const { error, setError, success, setSuccess, clear } = useStatus();
+  const [passwordInputType, setPasswordInputType] = useState("password");
+  const [token] = useState(
+    new URLSearchParams(window.location.search).get("token")!
+  );
+
+  const {
+    formState: { errors },
+    register,
+    handleSubmit,
+  } = useForm<{
+    newPassword: string;
+  }>();
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      clear();
+      await resetPassword.mutateAsync({
+        token: token,
+        password: data.newPassword,
+      });
+      setSuccess("Password changed successfully!");
+    } catch (e: unknown) {
+      if (!(e instanceof AxiosError && e.response)) {
+        setError("Something went wrong.");
+        return;
+      }
+      if (isZodValidationError(e.response.data)) {
+        setError(getFirstZodValidationError(e.response.data));
+      } else {
+        const error = e.response.data;
+        setError(error.message);
+      }
+    }
+  });
+
+  function togglePasswordVisibility() {
+    setPasswordInputType((prev) => (prev === "password" ? "text" : "password"));
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Status error={error} success={success} />
+      <div className="flex flex-col">
+        <div className="mb-2 block">
+          <Label htmlFor="password">Password</Label>
+        </div>
+        <div className="relative">
+          <TextInput
+            type={passwordInputType}
+            id="password"
+            color={errors && errors.newPassword && "failure"}
+            helperText={errors && errors.newPassword && "Password is required"}
+            {...register("newPassword", {
+              required: true,
+            })}
+          />
+          <button
+            type="button"
+            className="absolute right-0 top-0 mt-2 mr-2"
+            onClick={togglePasswordVisibility}
+          >
+            {passwordInputType === "password" ? "Show" : "Hide"}
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <div className="mb-2 block">
+          <Label htmlFor="password">Token</Label>
+        </div>
+        <div className="text-sm text-gray-600 py-2 rounded-md break-words">
+          {token}
+        </div>
+      </div>
+
+      <Button type="submit">Set new password</Button>
     </form>
   );
 }

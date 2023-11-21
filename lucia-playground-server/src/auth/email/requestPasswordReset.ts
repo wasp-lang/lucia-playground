@@ -3,40 +3,43 @@ import { Router } from "express";
 import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
 import { validateRequest } from "zod-express";
-import { isEmailVerificationRequired } from "./utils.js";
+import { createToken, sendEmail } from "./utils.js";
+import { env } from "../../env.js";
 
-export function setupLogin(router: Router) {
+export function setupRequestPasswordReset(router: Router) {
   router.post(
-    "/login/email",
+    "/request-password-reset",
     validateRequest({
       body: z.object({
         email: z.string().email({
           message: "Invalid email address",
         }),
-        password: z.string(),
       }),
     }),
     async (req, res) => {
-      const { email, password } = req.body;
+      const { email } = req.body;
 
       try {
-        const key = await auth.useKey("email", email.toLowerCase(), password);
+        const key = await auth.getKey("email", email.toLowerCase());
         const user = await auth.getUser(key.userId);
 
-        if (isEmailVerificationRequired && !user.isEmailVerified) {
-          return res.status(400).json({
-            success: false,
-            message: "Incorrect email or password",
-          });
-        } else {
-          await putUserInSession(key.userId, req, res);
+        await auth.updateUserAttributes(user.userId, {
+          passwordResetSentAt: new Date(),
+        });
 
-          return res.status(200).json({
-            success: true,
-          });
-        }
+        const token = createToken({
+          email: key.providerUserId,
+        });
+
+        await sendEmail(
+          `Reset your password at ${env.CLIENT_URL}/reset-password?token=${token}`
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: "Password reset email sent",
+        });
       } catch (e) {
         if (
           e instanceof LuciaError &&

@@ -21,6 +21,11 @@ export const auth = lucia({
     session: "session",
     key: "key",
   }),
+  getUserAttributes: (data) => ({
+    isEmailVerified: data.isEmailVerified,
+    emailVerificationSentAt: data.emailVerificationSentAt,
+    passwordResetSentAt: data.passwordResetSentAt,
+  }),
 });
 
 export type Auth = typeof auth;

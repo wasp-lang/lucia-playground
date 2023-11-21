@@ -25,6 +25,20 @@ export function loginWithEmail({
   return api.post("/auth/login/email", { email, password });
 }
 
+export function requestPasswordReset({ email }: { email: string }) {
+  return api.post("/auth/request-password-reset", { email });
+}
+
+export function passwordReset({
+  password,
+  token,
+}: {
+  password: string;
+  token: string;
+}) {
+  return api.post("/auth/reset-password", { password, token });
+}
+
 export function signUpWithUsername({
   username,
   password,

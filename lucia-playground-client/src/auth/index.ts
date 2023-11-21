@@ -7,6 +7,8 @@ export function useAuth() {
     email: {
       useSignUp: useEmailSignUp,
       useLogin: useEmailLogin,
+      useRequestPasswordReset,
+      usePasswordReset,
     },
     username: {
       useSignUp: useUsernameSignUp,
@@ -56,6 +58,18 @@ function useEmailLogin() {
         queryKey: [getUsersQueryKey],
       });
     },
+  });
+}
+
+function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: api.requestPasswordReset,
+  });
+}
+
+function usePasswordReset() {
+  return useMutation({
+    mutationFn: api.passwordReset,
   });
 }
 
