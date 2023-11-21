@@ -7,9 +7,10 @@ import { prismaClient } from "./prisma.js";
 // the Web Crypto API. This is not required if you’re using Node.js v20
 // and above.
 import "lucia/polyfill/node";
+import { env } from "./env.js";
 
 export const auth = lucia({
-  env: "DEV",
+  env: env.NODE_ENV === "production" ? "PROD" : "DEV",
   // Lucia validates the requests by checking if
   // * they came from same origin
   // * or they came form a whitelisted subdomain
