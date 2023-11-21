@@ -208,7 +208,7 @@ export function ResetPassword() {
   const resetPassword = auth.email.usePasswordReset();
   const { error, setError, success, setSuccess, clear } = useStatus();
   const [passwordInputType, setPasswordInputType] = useState("password");
-  const [token] = useState(
+  const [token, setToken] = useState(
     new URLSearchParams(window.location.search).get("token")!
   );
 
@@ -216,6 +216,7 @@ export function ResetPassword() {
     formState: { errors },
     register,
     handleSubmit,
+    reset,
   } = useForm<{
     newPassword: string;
   }>();
@@ -228,6 +229,11 @@ export function ResetPassword() {
         password: data.newPassword,
       });
       setSuccess("Password changed successfully!");
+      // Remove token from URL
+      setToken("");
+      // Go to /
+      window.history.pushState({}, "", "/");
+      reset();
     } catch (e: unknown) {
       if (!(e instanceof AxiosError && e.response)) {
         setError("Something went wrong.");
@@ -277,7 +283,7 @@ export function ResetPassword() {
           <Label htmlFor="password">Token</Label>
         </div>
         <div className="text-sm text-gray-600 py-2 rounded-md break-words">
-          {token}
+          {token || "No token found in URL"}
         </div>
       </div>
 
