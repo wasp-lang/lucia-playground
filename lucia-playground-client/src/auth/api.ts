@@ -1,8 +1,16 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const session = localStorage.getItem("session");
+  if (session) {
+    config.headers["Authorization"] = `Bearer ${session}`;
+  }
+  return config;
 });
 
 export function signUpWithEmail({
@@ -59,11 +67,22 @@ export function loginWithUsername({
   return api.post("/auth/login/username", { username, password });
 }
 
-export function logout() {
-  return api.post("/auth/logout");
+export async function logout() {
+  await api.post("/auth/logout");
+  localStorage.removeItem("session");
 }
 
 export async function getUser() {
   const response = await api.get("/auth/user");
   return response.data;
+}
+
+export async function loginWithOAuth(
+  provider: string,
+  data: {
+    code: string;
+    state: string;
+  }
+): Promise<AxiosResponse<{ success: true; sessionId: string }>> {
+  return api.post(`/auth/login/${provider}/callback`, data);
 }

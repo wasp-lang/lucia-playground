@@ -1,3 +1,4 @@
+import * as z from "zod";
 import {
   Request as ExpressRequest,
   Response as ExpressResponse,
@@ -11,10 +12,11 @@ import {
 } from "@lucia-auth/oauth";
 
 import { env } from "../../env.js";
-import { putUserInSession } from "../utils.js";
+import { getSessionForUserId, putUserInSession } from "../utils.js";
+import { validateRequest } from "zod-express";
 
 export function getRedirectUri(providerName: string) {
-  return `${env.SERVER_URL}/auth/login/${providerName}/callback`;
+  return `${env.CLIENT_URL}/callback/${providerName}`;
 }
 
 export function setupProviderHandlers<
@@ -36,12 +38,18 @@ export function setupProviderHandlers<
     }
   );
 
-  router.get(
+  router.post(
     `/login/${providerName}/callback`,
-    async (req: ExpressRequest, res: ExpressResponse) => {
+    validateRequest({
+      body: z.object({
+        state: z.string(),
+        code: z.string(),
+      }),
+    }),
+    async (req, res) => {
       const storedState = getStateFromCookie(providerName, req);
-      const state = req.query.state;
-      const code = req.query.code;
+      const state = req.body.state;
+      const code = req.body.code;
 
       if (
         !storedState ||
@@ -80,10 +88,15 @@ export function setupProviderHandlers<
 
         const user = await getUser();
 
-        await putUserInSession(user.userId, req, res);
+        // await putUserInSession(user.userId, req, res);
+
+        const session = await getSessionForUserId(user.userId);
 
         // NOTE: this might be a deal breaker for us, since we need to redirect to a different domain
-        return res.status(302).setHeader("Location", env.CLIENT_URL).end();
+        return res.json({
+          success: true,
+          sessionId: session.sessionId,
+        });
       } catch (e) {
         if (e instanceof OAuthRequestError) {
           return res.status(400).json({

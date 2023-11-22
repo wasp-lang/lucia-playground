@@ -14,6 +14,9 @@ export function useAuth() {
       useSignUp: useUsernameSignUp,
       useLogin: useUsernameLogin,
     },
+    oauth: {
+      useLoginWithOAuth,
+    },
     useLogout,
     useGetUser,
   };
@@ -106,6 +109,29 @@ function useLogout() {
     mutationFn: api.logout,
     onSuccess: () => {
       queryClient.removeQueries({
+        queryKey: [getUsersQueryKey],
+      });
+    },
+  });
+}
+
+function useLoginWithOAuth(
+  provider: string,
+  data: {
+    code: string;
+    state: string;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => api.loginWithOAuth(provider, data),
+    onSuccess: (response) => {
+      const data = response.data;
+      if (data.success) {
+        localStorage.setItem("session", data.sessionId);
+      }
+      queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
       });
     },

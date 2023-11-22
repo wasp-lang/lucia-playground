@@ -5,7 +5,7 @@ import { auth } from "../lucia.js";
 export function setupLogout(router: Router) {
   router.post("/logout", async (req, res) => {
     const authRequest = auth.handleRequest(req, res);
-    const session = await authRequest.validate(); // or `authRequest.validateBearerToken()`
+    const session = await authRequest.validateBearerToken();
 
     if (!session) {
       return res.status(401).json({

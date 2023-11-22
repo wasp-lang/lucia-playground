@@ -6,7 +6,7 @@ import { auth } from "../lucia.js";
 export function setupCurrentUser(router: Router) {
   router.get("/user", async (req, res) => {
     const authRequest = auth.handleRequest(req, res);
-    const session = await authRequest.validate(); // or `authRequest.validateBearerToken()`
+    const session = await authRequest.validateBearerToken();
     if (!session) {
       return res.status(401).json({
         success: false,
