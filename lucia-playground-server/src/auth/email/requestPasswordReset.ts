@@ -4,8 +4,9 @@ import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
-import { createToken, sendEmail } from "./utils.js";
+import { sendEmail } from "./utils.js";
 import { env } from "../../env.js";
+import { createToken } from "../utils.js";
 
 export function setupRequestPasswordReset(router: Router) {
   router.post(
@@ -33,12 +34,12 @@ export function setupRequestPasswordReset(router: Router) {
         });
 
         await sendEmail(
-          `Reset your password at ${env.CLIENT_URL}/reset-password?token=${token}`
+          `Reset your password at ${env.CLIENT_URL}/?token=${token}`
         );
 
         return res.status(200).json({
           success: true,
-          message: `Reset your password at ${env.CLIENT_URL}/reset-password?token=${token}`,
+          message: `Reset your password at ${env.CLIENT_URL}/?token=${token}`,
         });
       } catch (e) {
         if (
@@ -51,6 +52,8 @@ export function setupRequestPasswordReset(router: Router) {
             message: "Incorrect email or password",
           });
         }
+
+        console.error(e);
 
         return res.status(500).json({
           success: false,

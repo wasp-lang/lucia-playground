@@ -3,7 +3,7 @@ import { Router } from "express";
 
 import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
-import { verifyToken } from "./utils.js";
+import { verifyToken } from "../utils.js";
 
 export function setupResetPassword(router: Router) {
   router.post(
@@ -33,8 +33,6 @@ export function setupResetPassword(router: Router) {
           message: "Password successfully reset",
         });
       } catch (e) {
-        console.error(e);
-
         return res.status(500).json({
           success: false,
           message: "Something went wrong",

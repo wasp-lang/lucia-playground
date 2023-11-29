@@ -3,7 +3,7 @@ import { Router } from "express";
 import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
+import { getSessionForUserId } from "../utils.js";
 import { validateRequest } from "zod-express";
 
 export function setupLogin(router: Router) {
@@ -27,11 +27,11 @@ export function setupLogin(router: Router) {
           password
         );
 
-        await putUserInSession(key.userId, req, res);
+        const session = await getSessionForUserId(key.userId);
 
-        return res.status(200).json({
+        return res.json({
           success: true,
-          message: "Logged in successfully",
+          sessionId: session.sessionId,
         });
       } catch (e) {
         if (

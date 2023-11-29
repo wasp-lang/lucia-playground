@@ -1,11 +1,9 @@
 import * as z from "zod";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
 import { validateRequest } from "zod-express";
-import { verifyToken } from "./utils.js";
+import { verifyToken } from "../utils.js";
 
 export function setupVerifyEmail(router: Router) {
   router.get(

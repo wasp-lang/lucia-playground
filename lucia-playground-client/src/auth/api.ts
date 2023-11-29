@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -77,12 +77,8 @@ export async function getUser() {
   return response.data;
 }
 
-export async function loginWithOAuth(
-  provider: string,
-  data: {
-    code: string;
-    state: string;
-  }
-): Promise<AxiosResponse<{ success: true; sessionId: string }>> {
-  return api.post(`/auth/login/${provider}/callback`, data);
+export async function exchangeOAuthCodeForToken(data: { code: string }) {
+  return api.post<
+    { success: true; sessionId: string } | { success: false; message: string }
+  >(`/auth/exchange-code`, data);
 }

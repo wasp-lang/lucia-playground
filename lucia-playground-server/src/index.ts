@@ -17,6 +17,7 @@ import { setupDiscord } from "./auth/oauth/discord.js";
 import { setupRequestPasswordReset } from "./auth/email/requestPasswordReset.js";
 import { setupResetPassword } from "./auth/email/resetPassword.js";
 import { setupVerifyEmail } from "./auth/email/verifyEmail.js";
+import { setupExchangeCode } from "./auth/oauth/exchangeCode.js";
 
 const app = express();
 
@@ -50,6 +51,9 @@ setupResetPassword(authRouter);
 // Username auth
 setupUsernameSignup(authRouter);
 setupUsernameLogin(authRouter);
+
+// OAuth
+setupExchangeCode(authRouter);
 
 // Google
 setupGoogle(authRouter);

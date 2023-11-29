@@ -3,7 +3,7 @@ import { Router } from "express";
 import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
+import { getSessionForUserId } from "../utils.js";
 import { validateRequest } from "zod-express";
 import { isEmailVerificationRequired } from "./utils.js";
 
@@ -31,11 +31,14 @@ export function setupLogin(router: Router) {
             message: "Incorrect email or password",
           });
         } else {
-          await putUserInSession(key.userId, req, res);
+          // await putUserInSession(key.userId, req, res);
 
-          return res.status(200).json({
+          const session = await getSessionForUserId(user.userId);
+
+          // NOTE: this might be a deal breaker for us, since we need to redirect to a different domain
+          return res.json({
             success: true,
-            message: "Logged in successfully",
+            sessionId: session.sessionId,
           });
         }
       } catch (e) {

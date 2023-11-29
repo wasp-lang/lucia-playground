@@ -12,11 +12,11 @@ import {
 } from "@lucia-auth/oauth";
 
 import { env } from "../../env.js";
-import { getSessionForUserId, putUserInSession } from "../utils.js";
 import { validateRequest } from "zod-express";
+import { createToken, verifyToken } from "../utils.js";
 
 export function getRedirectUri(providerName: string) {
-  return `${env.CLIENT_URL}/callback/${providerName}`;
+  return `${env.SERVER_URL}/auth/login/${providerName}/callback`;
 }
 
 export function setupProviderHandlers<
@@ -38,18 +38,18 @@ export function setupProviderHandlers<
     }
   );
 
-  router.post(
+  router.get(
     `/login/${providerName}/callback`,
     validateRequest({
-      body: z.object({
+      query: z.object({
         state: z.string(),
         code: z.string(),
       }),
     }),
     async (req, res) => {
       const storedState = getStateFromCookie(providerName, req);
-      const state = req.body.state;
-      const code = req.body.code;
+      const state = req.query.state;
+      const code = req.query.code;
 
       if (
         !storedState ||
@@ -88,15 +88,13 @@ export function setupProviderHandlers<
 
         const user = await getUser();
 
-        // await putUserInSession(user.userId, req, res);
+        const oneTimeCode = tokenStore.createToken(user.userId);
 
-        const session = await getSessionForUserId(user.userId);
-
-        // NOTE: this might be a deal breaker for us, since we need to redirect to a different domain
-        return res.json({
-          success: true,
-          sessionId: session.sessionId,
-        });
+        // Redirect to the client with the one time code
+        return res
+          .status(302)
+          .setHeader("Location", `${env.CLIENT_URL}/callback#${oneTimeCode}`)
+          .end();
       } catch (e) {
         if (e instanceof OAuthRequestError) {
           return res.status(400).json({
@@ -112,6 +110,45 @@ export function setupProviderHandlers<
       }
     }
   );
+}
+
+export const tokenStore = createTokenStore();
+
+function createTokenStore() {
+  const usedTokens = new Map<string, number>();
+
+  const validFor = 1000 * 60; // 1 minute
+  const cleanupAfter = 1000 * 60 * 60; // 1 hour
+
+  function cleanUp() {
+    const now = Date.now();
+    for (const [token, timestamp] of usedTokens.entries()) {
+      if (now - timestamp > cleanupAfter) {
+        usedTokens.delete(token);
+      }
+    }
+  }
+
+  return {
+    createToken(userId: string) {
+      return createToken(
+        {
+          id: userId,
+        },
+        validFor
+      );
+    },
+    verifyToken(token: string) {
+      return verifyToken<{ id: string }>(token);
+    },
+    isUsed(token: string) {
+      return usedTokens.has(token);
+    },
+    markUsed(token: string) {
+      usedTokens.set(token, Date.now());
+      cleanUp();
+    },
+  };
 }
 
 function setStateInCookie(

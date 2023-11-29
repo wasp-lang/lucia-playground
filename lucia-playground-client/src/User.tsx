@@ -1,11 +1,18 @@
 import { Button } from "flowbite-react";
 
 import { useAuth } from "./auth";
+import { indexRoute } from "./router";
+import { Navigate } from "@tanstack/react-router";
 
 function User() {
   const auth = useAuth();
   const { data: user } = auth.useGetUser();
   const logout = auth.useLogout();
+
+  if (!user) {
+    return <Navigate to={indexRoute.id} />;
+  }
+
   return (
     <>
       {!user && (

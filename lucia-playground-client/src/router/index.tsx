@@ -5,8 +5,6 @@ import {
   lazyRouteComponent,
 } from "@tanstack/react-router";
 
-import * as z from "zod";
-
 import { Root } from "./Root";
 
 const rootRoute = new RootRoute({
@@ -27,11 +25,7 @@ export const userRoute = new Route({
 
 export const callbackRoute = new Route({
   getParentRoute: () => rootRoute,
-  path: "/callback/$provider",
-  validateSearch: z.object({
-    code: z.string(),
-    state: z.string(),
-  }),
+  path: "/callback",
   component: lazyRouteComponent(() => import("../Callback")),
 });
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 
 export function useAuth() {
   return {
@@ -15,7 +15,7 @@ export function useAuth() {
       useLogin: useUsernameLogin,
     },
     oauth: {
-      useLoginWithOAuth,
+      useExchangeCodeForToken: useExchangeOAuthCodeForToken,
     },
     useLogout,
     useGetUser,
@@ -56,7 +56,8 @@ function useEmailLogin() {
 
   return useMutation({
     mutationFn: api.loginWithEmail,
-    onSuccess: () => {
+    onSuccess: (response) => {
+      setSessionIfExists(response);
       queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
       });
@@ -94,7 +95,8 @@ function useUsernameLogin() {
 
   return useMutation({
     mutationFn: api.loginWithUsername,
-    onSuccess: () => {
+    onSuccess: (response) => {
+      setSessionIfExists(response);
       queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
       });
@@ -115,25 +117,27 @@ function useLogout() {
   });
 }
 
-function useLoginWithOAuth(
-  provider: string,
-  data: {
-    code: string;
-    state: string;
-  }
-) {
+function useExchangeOAuthCodeForToken(data: { code: string }) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => api.loginWithOAuth(provider, data),
+    mutationFn: async () => api.exchangeOAuthCodeForToken(data),
     onSuccess: (response) => {
-      const data = response.data;
-      if (data.success) {
-        localStorage.setItem("session", data.sessionId);
-      }
+      setSessionIfExists(response);
       queryClient.invalidateQueries({
         queryKey: [getUsersQueryKey],
       });
     },
   });
+}
+
+function setSessionIfExists(
+  response: AxiosResponse<
+    { success: true; sessionId: string } | { success: false }
+  >
+) {
+  const data = response.data;
+  if (data.success) {
+    localStorage.setItem("session", data.sessionId);
+  }
 }

@@ -4,13 +4,9 @@ import { Router } from "express";
 import { LuciaError } from "lucia";
 
 import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
+import { createToken, putUserInSession } from "../utils.js";
 import { validateRequest } from "zod-express";
-import {
-  createToken,
-  isEmailVerificationRequired,
-  sendEmail,
-} from "./utils.js";
+import { isEmailVerificationRequired, sendEmail } from "./utils.js";
 import { env } from "../../env.js";
 
 export function setupSignup(router: Router) {
@@ -96,6 +92,7 @@ export function setupSignup(router: Router) {
           // });
           return res.status(200).json({
             success: true,
+            message: "Signed up successfully (fake)",
           });
         }
 
