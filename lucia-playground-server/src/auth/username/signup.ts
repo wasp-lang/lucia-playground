@@ -1,11 +1,9 @@
 import * as z from "zod";
-import { Prisma } from "@prisma/client";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
-import { auth } from "../../lucia.js";
-import { putUserInSession } from "../utils.js";
 import { validateRequest } from "zod-express";
+import { createAuth } from "../db.js";
+import { hashPassword } from "../passwords.js";
 
 export function setupSignup(router: Router) {
   router.post(
@@ -24,37 +22,17 @@ export function setupSignup(router: Router) {
       const { username, password } = req.body;
 
       try {
-        const user = await auth.createUser({
-          key: {
-            providerId: "username", // auth method
-            providerUserId: username.toLowerCase(), // unique id when using "username" auth method
-            password, // hashed by Lucia
-          },
-          attributes: {
-            user: {
-              create: {},
-            },
-          },
+        const hashedPassword = await hashPassword(password);
+        const auth = await createAuth("username", username.toLowerCase(), {
+          hashedPassword,
         });
-
-        await putUserInSession(user.userId, req, res);
 
         return res.status(200).json({
           success: true,
           message: "Signed up successfully",
         });
       } catch (e) {
-        if (
-          (e instanceof Prisma.PrismaClientKnownRequestError &&
-            e.code === "P2002") ||
-          (e instanceof LuciaError && e.message === "AUTH_DUPLICATE_KEY_ID")
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: "Username already in use",
-          });
-        }
-
+        // TODO: handle different errors
         console.error(e);
 
         return res.status(500).json({

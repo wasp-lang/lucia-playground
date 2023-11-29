@@ -1,10 +1,10 @@
 import * as z from "zod";
 import { Router } from "express";
 
-import { auth } from "../../lucia.js";
-import { getSessionForUserId } from "../utils.js";
+import { getSessionForAuthId } from "../utils.js";
 import { validateRequest } from "zod-express";
 import { tokenStore } from "./utils.js";
+import { findAuth } from "../db.js";
 
 export function setupExchangeCode(router: Router) {
   router.post(
@@ -27,17 +27,27 @@ export function setupExchangeCode(router: Router) {
           });
         }
 
-        const { id: userId } = tokenStore.verifyToken(code);
-        const user = await auth.getUser(userId);
-        const session = await getSessionForUserId(user.userId);
+        const { id: authId } = tokenStore.verifyToken(code);
+        const auth = await findAuth(authId);
+
+        if (!auth) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid code",
+          });
+        }
+
+        const session = await getSessionForAuthId(auth.id);
 
         tokenStore.markUsed(code);
 
         return res.json({
           success: true,
-          sessionId: session.sessionId,
+          sessionId: session.id,
         });
       } catch (e) {
+        console.error(e);
+
         return res.status(500).json({
           success: false,
           message: "Something went wrong",

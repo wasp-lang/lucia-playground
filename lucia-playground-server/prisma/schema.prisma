@@ -14,41 +14,37 @@ datasource db {
 model User {
   id String @id @default(uuid())
 
-  providerData Json?
-
   auth Auth?
 }
 
 // Authentication models
 model Auth {
-  id String @id @unique
-
-  isEmailVerified         Boolean   @default(false)
-  emailVerificationSentAt DateTime?
-  passwordResetSentAt     DateTime?
+  id String @id @default(uuid())
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  auth_session Session[]
-  key          Key[]
+  auth_session  Session[]
+  authProviders AuthProvider[]
 }
 
 model Session {
-  id             String @id @unique
-  active_expires BigInt
-  idle_expires   BigInt
-  user_id        String
-  user           Auth   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  id        String   @id @unique
+  userId    String
+  expiresAt DateTime
+  auth      Auth     @relation(references: [id], fields: [userId], onDelete: Cascade)
 
-  @@index([user_id])
+  @@index([userId])
 }
 
-model Key {
-  id              String  @id @unique
-  hashed_password String?
-  user_id         String
-  user            Auth    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+model AuthProvider {
+  id String @id @default(uuid())
 
-  @@index([user_id])
+  providerId     String
+  providerUserId String
+
+  providerData Json @default("{}")
+
+  authId String
+  auth   Auth   @relation(fields: [authId], references: [id])
 }

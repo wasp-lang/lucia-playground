@@ -1,11 +1,11 @@
 import * as z from "zod";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
-import { auth } from "../../lucia.js";
-import { getSessionForUserId } from "../utils.js";
+import { getSessionForAuthId } from "../utils.js";
 import { validateRequest } from "zod-express";
 import { isEmailVerificationRequired } from "./utils.js";
+import { findAuthProvider } from "../db.js";
+import { verifyPassword } from "../passwords.js";
 
 export function setupLogin(router: Router) {
   router.post(
@@ -22,10 +22,36 @@ export function setupLogin(router: Router) {
       const { email, password } = req.body;
 
       try {
-        const key = await auth.useKey("email", email.toLowerCase(), password);
-        const user = await auth.getUser(key.userId);
+        const authProvider = await findAuthProvider(
+          "email",
+          email.toLowerCase()
+        );
 
-        if (isEmailVerificationRequired && !user.isEmailVerified) {
+        if (!authProvider) {
+          return res.status(400).json({
+            success: false,
+            message: "Incorrect email or password",
+          });
+        }
+
+        const hashedPassword = (authProvider.providerData as any)
+          .hashedPassword;
+        const passwordMatches = await verifyPassword({
+          hash: hashedPassword,
+          password,
+        });
+
+        if (!passwordMatches) {
+          return res.status(400).json({
+            success: false,
+            message: "Incorrect email or password",
+          });
+        }
+
+        if (
+          isEmailVerificationRequired &&
+          !(authProvider.providerData as any).isEmailVerified
+        ) {
           return res.status(400).json({
             success: false,
             message: "Incorrect email or password",
@@ -33,25 +59,16 @@ export function setupLogin(router: Router) {
         } else {
           // await putUserInSession(key.userId, req, res);
 
-          const session = await getSessionForUserId(user.userId);
+          const session = await getSessionForAuthId(authProvider.authId);
 
-          // NOTE: this might be a deal breaker for us, since we need to redirect to a different domain
           return res.json({
             success: true,
-            sessionId: session.sessionId,
+            sessionId: session.id,
           });
         }
       } catch (e) {
-        if (
-          e instanceof LuciaError &&
-          (e.message === "AUTH_INVALID_KEY_ID" ||
-            e.message === "AUTH_INVALID_PASSWORD")
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: "Incorrect email or password",
-          });
-        }
+        // TODO: handle different errors
+        console.error(e);
 
         return res.status(500).json({
           success: false,

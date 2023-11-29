@@ -1,9 +1,9 @@
 import * as z from "zod";
 import { Router } from "express";
 
-import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
 import { verifyToken } from "../utils.js";
+import { findAuthProvider, updateProviderData } from "../db.js";
 
 export function setupVerifyEmail(router: Router) {
   router.get(
@@ -16,11 +16,29 @@ export function setupVerifyEmail(router: Router) {
     async (req, res) => {
       const { token } = req.query;
       try {
-        const { id } = verifyToken<{ id: string }>(token);
+        const { email } = verifyToken<{ email: string }>(token);
 
-        await auth.updateUserAttributes(id, {
-          isEmailVerified: true,
-        });
+        const authProvider = await findAuthProvider(
+          "email",
+          email.toLowerCase()
+        );
+
+        if (!authProvider) {
+          return res.status(400).json({
+            success: false,
+            message: "Incorrect email or password",
+          });
+        }
+
+        await updateProviderData(
+          authProvider.providerId,
+          authProvider.providerUserId,
+          {
+            ...(authProvider.providerData as any),
+            emailVerificationSentAt: null,
+            isEmailVerified: true,
+          }
+        );
 
         return res.status(200).json({
           success: true,

@@ -7,21 +7,8 @@ import jwt from "jsonwebtoken";
 import { auth } from "../lucia.js";
 import { env } from "../env.js";
 
-export async function putUserInSession(
-  userId: string,
-  req: ExpressRequest,
-  res: ExpressResponse
-) {
-  const session = await getSessionForUserId(userId);
-  const authRequest = auth.handleRequest(req, res);
-  authRequest.setSession(session);
-}
-
-export async function getSessionForUserId(userId: string) {
-  return auth.createSession({
-    userId,
-    attributes: {},
-  });
+export async function getSessionForAuthId(authId: string) {
+  return auth.createSession(authId, {});
 }
 const { sign, verify } = jwt;
 

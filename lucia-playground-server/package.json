@@ -26,13 +26,14 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "@lucia-auth/adapter-prisma": "^3.0.2",
-    "@lucia-auth/oauth": "^3.5.0",
+    "@lucia-auth/adapter-prisma": "^4.0.0-beta.5",
+    "arctic": "^0.3.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "lucia": "^2.7.4",
+    "lucia": "^3.0.0-beta.9",
+    "oslo": "^0.23.1",
     "zod": "^3.22.4",
     "zod-express": "^0.0.8"
   }

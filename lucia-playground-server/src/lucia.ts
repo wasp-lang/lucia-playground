@@ -1,32 +1,45 @@
-import { lucia } from "lucia";
+import { Lucia } from "lucia";
 import { express } from "lucia/middleware";
-import { prisma } from "@lucia-auth/adapter-prisma";
+import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import { prismaClient } from "./prisma.js";
 
-// If you’re using Node.js version 18 or below, you need to polyfill
-// the Web Crypto API. This is not required if you’re using Node.js v20
-// and above.
-import "lucia/polyfill/node";
 import { env } from "./env.js";
 
-export const auth = lucia({
-  env: env.NODE_ENV === "production" ? "PROD" : "DEV",
+const prismaAdapter = new PrismaAdapter(
+  prismaClient.session,
+  prismaClient.auth
+);
+
+export const auth = new Lucia(prismaAdapter, {
   // Lucia validates the requests by checking if
   // * they came from same origin
   // * or they came form a whitelisted subdomain
   // "csrfProtection" must be "false" if you have different doamins for frontend and backend 🤷‍♂️
   csrfProtection: false,
   middleware: express(),
-  adapter: prisma(prismaClient, {
-    user: "auth",
-    session: "session",
-    key: "key",
-  }),
-  getUserAttributes: (data) => ({
-    isEmailVerified: data.isEmailVerified,
-    emailVerificationSentAt: data.emailVerificationSentAt,
-    passwordResetSentAt: data.passwordResetSentAt,
+  sessionCookie: {
+    name: "session",
+    expires: true,
+    attributes: {
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+    },
+  },
+  getUserAttributes: (databaseUserAttributes) => ({
+    isEmailVerified: databaseUserAttributes.isEmailVerified,
+    emailVerificationSentAt: databaseUserAttributes.emailVerificationSentAt,
+    passwordResetSentAt: databaseUserAttributes.passwordResetSentAt,
   }),
 });
 
-export type Auth = typeof auth;
+declare module "lucia" {
+  interface Register {
+    Lucia: typeof auth;
+    DatabaseUserAttributes: {
+      isEmailVerified: boolean;
+      emailVerificationSentAt?: Date;
+      passwordResetSentAt?: Date;
+    };
+    DatabaseSessionAttributes: {};
+  }
+}

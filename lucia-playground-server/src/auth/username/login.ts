@@ -1,10 +1,10 @@
 import * as z from "zod";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
-import { auth } from "../../lucia.js";
-import { getSessionForUserId } from "../utils.js";
+import { getSessionForAuthId } from "../utils.js";
 import { validateRequest } from "zod-express";
+import { findAuthProvider } from "../db.js";
+import { verifyPassword } from "../passwords.js";
 
 export function setupLogin(router: Router) {
   router.post(
@@ -21,29 +21,48 @@ export function setupLogin(router: Router) {
       const { username, password } = req.body;
 
       try {
-        const key = await auth.useKey(
+        const usernameAuthProvider = await findAuthProvider(
           "username",
-          username.toLowerCase(),
-          password
+          username.toLowerCase()
         );
+        if (!usernameAuthProvider) {
+          return res.status(401).json({
+            success: false,
+            message: "Invalid username or password",
+          });
+        }
 
-        const session = await getSessionForUserId(key.userId);
+        const hashedPassword = (usernameAuthProvider.providerData as any)
+          .hashedPassword;
+
+        if (!hashedPassword) {
+          return res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+          });
+        }
+
+        const passwordMatches = await verifyPassword({
+          hash: hashedPassword,
+          password,
+        });
+
+        if (!passwordMatches) {
+          return res.status(401).json({
+            success: false,
+            message: "Invalid username or password",
+          });
+        }
+
+        const session = await getSessionForAuthId(usernameAuthProvider.authId);
 
         return res.json({
           success: true,
-          sessionId: session.sessionId,
+          sessionId: session.id,
         });
       } catch (e) {
-        if (
-          e instanceof LuciaError &&
-          (e.message === "AUTH_INVALID_KEY_ID" ||
-            e.message === "AUTH_INVALID_PASSWORD")
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: "Incorrect username or password",
-          });
-        }
+        // TODO: handle different errors
+        console.error(e);
 
         return res.status(500).json({
           success: false,

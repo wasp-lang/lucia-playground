@@ -4,35 +4,34 @@ import {
   Response as ExpressResponse,
   Router,
 } from "express";
-import { parseCookie } from "lucia/utils";
-import {
-  OAuth2ProviderAuth,
-  OAuthRequestError,
-  ProviderUserAuth,
-} from "@lucia-auth/oauth";
-
 import { env } from "../../env.js";
 import { validateRequest } from "zod-express";
 import { createToken, verifyToken } from "../utils.js";
+import { generateState } from "arctic";
+import { parseCookies } from "oslo/cookie";
+import { createAuth, findAuth, findAuthProvider } from "../db.js";
 
 export function getRedirectUri(providerName: string) {
   return `${env.SERVER_URL}/auth/login/${providerName}/callback`;
 }
 
 export function setupProviderHandlers<
-  Provider extends OAuth2ProviderAuth<ProviderUserAuth<any>>
+  Provider extends {
+    createAuthorizationURL(state: string): Promise<URL>;
+    validateAuthorizationCode(code: string): Promise<any>;
+    getUser(accessToken: string): Promise<any>;
+  }
 >(
   router: Router,
   providerName: string,
   provider: Provider,
-  getUserData?: (
-    providerData: Awaited<ReturnType<Provider["validateCallback"]>>
-  ) => Record<string, unknown>
+  getUserData?: (user: any) => Record<string, unknown>
 ) {
   router.get(
     `/login/${providerName}`,
     async (_req: ExpressRequest, res: ExpressResponse) => {
-      const [url, state] = await provider.getAuthorizationUrl();
+      const state = generateState();
+      const url = await provider.createAuthorizationURL(state);
       setStateInCookie(providerName, state, res);
       return res.status(302).setHeader("Location", url.toString()).end();
     }
@@ -64,31 +63,49 @@ export function setupProviderHandlers<
       }
 
       try {
-        const providerData = await provider.validateCallback(code);
+        const tokens = await provider.validateAuthorizationCode(code);
 
-        const { getExistingUser, createUser } = providerData;
+        const { accessToken } = tokens;
 
-        const getUser = async () => {
-          const existingUser = await getExistingUser();
-          if (existingUser) {
-            return existingUser;
-          }
-          const user = await createUser({
-            attributes: {
-              user: {
-                create: {
-                  // NOTE: used for the demo only
-                  providerData: getUserData?.(providerData as any),
-                },
-              },
-            },
+        const userData = await provider.getUser(accessToken);
+
+        const providerUserId = userData.sub ?? userData.id;
+
+        if (!providerUserId) {
+          return res.status(500).json({
+            success: false,
+            message: "Something went wrong",
           });
-          return user;
+        }
+
+        const providerUserIdString = `${providerUserId}`;
+
+        const getAuth = async () => {
+          const existingAuthProvider = await findAuthProvider(
+            providerName,
+            providerUserIdString
+          );
+          if (existingAuthProvider) {
+            return findAuth(existingAuthProvider.authId);
+          }
+          const auth = await createAuth(
+            providerName,
+            providerUserIdString,
+            getUserData?.(userData) ?? {}
+          );
+          return auth;
         };
 
-        const user = await getUser();
+        const auth = await getAuth();
 
-        const oneTimeCode = tokenStore.createToken(user.userId);
+        if (!auth) {
+          return res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+          });
+        }
+
+        const oneTimeCode = tokenStore.createToken(auth.id);
 
         // Redirect to the client with the one time code
         return res
@@ -96,12 +113,8 @@ export function setupProviderHandlers<
           .setHeader("Location", `${env.CLIENT_URL}/callback#${oneTimeCode}`)
           .end();
       } catch (e) {
-        if (e instanceof OAuthRequestError) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid code",
-          });
-        }
+        // TODO: handle different errors
+        console.error(e);
 
         return res.status(500).json({
           success: false,
@@ -153,7 +166,7 @@ function createTokenStore() {
 
 function setStateInCookie(
   providerName: string,
-  state: Awaited<ReturnType<OAuth2ProviderAuth["getAuthorizationUrl"]>>[1],
+  state: string,
   res: ExpressResponse
 ) {
   const cookieName = getCookieName(providerName);
@@ -166,9 +179,9 @@ function setStateInCookie(
 }
 
 function getStateFromCookie(providerName: string, req: ExpressRequest) {
-  const cookies = parseCookie(req.headers.cookie ?? "");
+  const cookies = parseCookies(req.headers.cookie ?? "");
   const cookieName = getCookieName(providerName);
-  return cookies[cookieName];
+  return cookies.get(cookieName);
 }
 
 function getCookieName(providerName: string) {

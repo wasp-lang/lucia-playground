@@ -4,6 +4,8 @@ import { Router } from "express";
 import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
 import { verifyToken } from "../utils.js";
+import { findAuthProvider, updateProviderData } from "../db.js";
+import { hashPassword } from "../passwords.js";
 
 export function setupResetPassword(router: Router) {
   router.post(
@@ -21,12 +23,30 @@ export function setupResetPassword(router: Router) {
       try {
         const { email } = verifyToken<{ email: string }>(token);
 
-        const key = await auth.updateKeyPassword("email", email, password);
+        const authProvider = await findAuthProvider(
+          "email",
+          email.toLowerCase()
+        );
 
-        await auth.updateUserAttributes(key.userId, {
-          isEmailVerified: true,
-          passwordResetSentAt: null,
-        });
+        if (!authProvider) {
+          return res.status(400).json({
+            success: false,
+            message: "Incorrect email or password",
+          });
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        await updateProviderData(
+          authProvider.providerId,
+          authProvider.providerUserId,
+          {
+            ...(authProvider.providerData as any),
+            hashedPassword,
+            isEmailVerified: true,
+            passwordResetSentAt: null,
+          }
+        );
 
         return res.status(200).json({
           success: true,

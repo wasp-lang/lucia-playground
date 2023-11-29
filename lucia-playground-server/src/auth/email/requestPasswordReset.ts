@@ -1,12 +1,11 @@
 import * as z from "zod";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
-import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
 import { sendEmail } from "./utils.js";
 import { env } from "../../env.js";
 import { createToken } from "../utils.js";
+import { findAuthProvider, updateProviderData } from "../db.js";
 
 export function setupRequestPasswordReset(router: Router) {
   router.post(
@@ -22,15 +21,32 @@ export function setupRequestPasswordReset(router: Router) {
       const { email } = req.body;
 
       try {
-        const key = await auth.getKey("email", email.toLowerCase());
-        const user = await auth.getUser(key.userId);
+        // const key = await auth.getKey("email", email.toLowerCase());
+        // const user = await auth.getUser(key.userId);
 
-        await auth.updateUserAttributes(user.userId, {
-          passwordResetSentAt: new Date(),
-        });
+        const authProvider = await findAuthProvider(
+          "email",
+          email.toLowerCase()
+        );
+
+        if (!authProvider) {
+          return res.status(400).json({
+            success: false,
+            message: "Incorrect email or password",
+          });
+        }
+
+        await updateProviderData(
+          authProvider.providerId,
+          authProvider.providerUserId,
+          {
+            ...(authProvider.providerData as any),
+            passwordResetSentAt: new Date(),
+          }
+        );
 
         const token = createToken({
-          email: key.providerUserId,
+          email: authProvider.providerUserId,
         });
 
         await sendEmail(
@@ -42,17 +58,7 @@ export function setupRequestPasswordReset(router: Router) {
           message: `Reset your password at ${env.CLIENT_URL}/?token=${token}`,
         });
       } catch (e) {
-        if (
-          e instanceof LuciaError &&
-          (e.message === "AUTH_INVALID_KEY_ID" ||
-            e.message === "AUTH_INVALID_PASSWORD")
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: "Incorrect email or password",
-          });
-        }
-
+        // TODO: handle different errors
         console.error(e);
 
         return res.status(500).json({

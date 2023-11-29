@@ -1,13 +1,18 @@
 import * as z from "zod";
-import { Prisma } from "@prisma/client";
 import { Router } from "express";
-import { LuciaError } from "lucia";
 
-import { auth } from "../../lucia.js";
-import { createToken, putUserInSession } from "../utils.js";
+import { createToken } from "../utils.js";
 import { validateRequest } from "zod-express";
 import { isEmailVerificationRequired, sendEmail } from "./utils.js";
 import { env } from "../../env.js";
+import {
+  createAuth,
+  deleteUser,
+  findAuth,
+  findAuthProvider,
+  updateProviderData,
+} from "../db.js";
+import { hashPassword } from "../passwords.js";
 
 export function setupSignup(router: Router) {
   router.post(
@@ -27,41 +32,50 @@ export function setupSignup(router: Router) {
 
       if (isEmailVerificationRequired) {
         try {
-          const key = await auth.getKey("email", email.toLowerCase());
-          const user = await auth.getUser(key.userId);
+          // const key = await auth.getKey("email", email.toLowerCase());
+          const authProvider = await findAuthProvider(
+            "email",
+            email.toLowerCase()
+          );
 
-          if (!user.isEmailVerified) {
-            await auth.deleteUser(user.userId);
+          if (!authProvider) {
+            throw new Error("User not found");
+          }
+
+          const auth = await findAuth(authProvider.authId);
+
+          if (!auth) {
+            throw new Error("User not found");
+          }
+
+          if (!(authProvider.providerData as any).isEmailVerified) {
+            await deleteUser(auth.userId);
           }
         } catch (e) {
-          const expectedError =
-            e instanceof LuciaError && e.message === "AUTH_INVALID_KEY_ID";
-          if (!expectedError) {
-            console.error(e);
-          }
+          // TODO: handle different errors
+          console.error(e);
         }
       }
 
       try {
-        const user = await auth.createUser({
-          key: {
-            providerId: "email", // auth method
-            providerUserId: email.toLowerCase(), // unique id when using "username" auth method
-            password, // hashed by Lucia
-          },
-          attributes: {
-            user: {
-              create: {},
-            },
-          },
+        const hashedPassword = await hashPassword(password);
+        const auth = await createAuth("email", email.toLowerCase(), {
+          hashedPassword,
         });
 
         if (isEmailVerificationRequired) {
           const token = createToken({
-            id: user.userId,
+            email: email.toLowerCase(),
           });
 
-          auth.updateUserAttributes(user.userId, {
+          // TODO: is there a way to directly update the data without fetching it first?
+          const authProvider = await findAuthProvider(
+            "email",
+            email.toLowerCase()
+          );
+
+          await updateProviderData("email", email.toLowerCase(), {
+            ...(authProvider?.providerData as any),
             emailVerificationSentAt: new Date(),
           });
 
@@ -74,29 +88,17 @@ export function setupSignup(router: Router) {
             message: `Verify your email at ${env.SERVER_URL}/auth/verify-email?token=${token}`,
           });
         } else {
-          await putUserInSession(user.userId, req, res);
+          // await putUserInSession(auth.userId, req, res);
           return res.status(200).json({
             success: true,
             message: "Signed up successfully",
           });
         }
       } catch (e) {
-        if (
-          (e instanceof Prisma.PrismaClientKnownRequestError &&
-            e.code === "P2002") ||
-          (e instanceof LuciaError && e.message === "AUTH_DUPLICATE_KEY_ID")
-        ) {
-          // return res.status(400).json({
-          //   success: false,
-          //   message: "Email already in use",
-          // });
-          return res.status(200).json({
-            success: true,
-            message: "Signed up successfully (fake)",
-          });
-        }
-
+        // TODO: handle different errors
         console.error(e);
+
+        // console.error(e);
 
         return res.status(500).json({
           success: false,

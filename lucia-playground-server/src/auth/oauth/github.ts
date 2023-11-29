@@ -1,21 +1,17 @@
 import { Router } from "express";
-import { github } from "@lucia-auth/oauth/providers";
+import { GitHub } from "arctic";
 
 import { setupProviderHandlers } from "./utils.js";
-import { auth } from "../../lucia.js";
 import { env } from "../../env.js";
 
 const name = "github";
 
-const githubAuth = github(auth, {
-  clientId: env.GITHUB_CLIENT_ID,
-  clientSecret: env.GITHUB_CLIENT_SECRET,
-  // This callback URL needs to be set in Github's UI:
-  // http://localhost:3001/auth/login/github/callback,
+const githubAuth = new GitHub(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET, {
+  scope: ["user:email"],
 });
 
 export function setupGithub(router: Router) {
-  setupProviderHandlers(router, name, githubAuth, (providerData) => {
-    return providerData.githubUser;
+  setupProviderHandlers(router, name, githubAuth, (user) => {
+    return user;
   });
 }
