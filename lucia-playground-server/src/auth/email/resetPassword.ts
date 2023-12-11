@@ -1,11 +1,13 @@
 import * as z from "zod";
 import { Router } from "express";
-
-import { auth } from "../../lucia.js";
 import { validateRequest } from "zod-express";
-import { verifyToken } from "../utils.js";
-import { findAuthProvider, updateProviderData } from "../db.js";
-import { hashPassword } from "../passwords.js";
+
+import {
+  verifyToken,
+  findAuthIdentity,
+  updateProviderData,
+  hashPassword,
+} from "../../sdk/index.js";
 
 export function setupResetPassword(router: Router) {
   router.post(
@@ -23,12 +25,12 @@ export function setupResetPassword(router: Router) {
       try {
         const { email } = verifyToken<{ email: string }>(token);
 
-        const authProvider = await findAuthProvider(
+        const authIdentity = await findAuthIdentity(
           "email",
           email.toLowerCase()
         );
 
-        if (!authProvider) {
+        if (!authIdentity) {
           return res.status(400).json({
             success: false,
             message: "Incorrect email or password",
@@ -38,10 +40,10 @@ export function setupResetPassword(router: Router) {
         const hashedPassword = await hashPassword(password);
 
         await updateProviderData(
-          authProvider.providerId,
-          authProvider.providerUserId,
+          authIdentity.providerId,
+          authIdentity.providerUserId,
           {
-            ...(authProvider.providerData as any),
+            ...(authIdentity.providerData as any),
             hashedPassword,
             isEmailVerified: true,
             passwordResetSentAt: null,

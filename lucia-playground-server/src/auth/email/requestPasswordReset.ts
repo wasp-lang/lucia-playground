@@ -4,8 +4,11 @@ import { Router } from "express";
 import { validateRequest } from "zod-express";
 import { sendEmail } from "./utils.js";
 import { env } from "../../env.js";
-import { createToken } from "../utils.js";
-import { findAuthProvider, updateProviderData } from "../db.js";
+import {
+  createToken,
+  findAuthIdentity,
+  updateProviderData,
+} from "../../sdk/index.js";
 
 export function setupRequestPasswordReset(router: Router) {
   router.post(
@@ -24,12 +27,12 @@ export function setupRequestPasswordReset(router: Router) {
         // const key = await auth.getKey("email", email.toLowerCase());
         // const user = await auth.getUser(key.userId);
 
-        const authProvider = await findAuthProvider(
+        const authIdentity = await findAuthIdentity(
           "email",
           email.toLowerCase()
         );
 
-        if (!authProvider) {
+        if (!authIdentity) {
           return res.status(400).json({
             success: false,
             message: "Incorrect email or password",
@@ -37,16 +40,16 @@ export function setupRequestPasswordReset(router: Router) {
         }
 
         await updateProviderData(
-          authProvider.providerId,
-          authProvider.providerUserId,
+          authIdentity.providerId,
+          authIdentity.providerUserId,
           {
-            ...(authProvider.providerData as any),
+            ...(authIdentity.providerData as any),
             passwordResetSentAt: new Date(),
           }
         );
 
         const token = createToken({
-          email: authProvider.providerUserId,
+          email: authIdentity.providerUserId,
         });
 
         await sendEmail(

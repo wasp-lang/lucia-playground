@@ -1,11 +1,9 @@
 import { Router } from "express";
-
-import { auth } from "../lucia.js";
+import { getSessionFromBearerToken, invalidateSession } from "../sdk/index.js";
 
 export function setupLogout(router: Router) {
   router.post("/logout", async (req, res) => {
-    const authRequest = auth.handleRequest(req, res);
-    const { session } = await authRequest.validateBearerToken();
+    const { session } = await getSessionFromBearerToken(req);
 
     if (!session) {
       return res.status(401).json({
@@ -13,9 +11,7 @@ export function setupLogout(router: Router) {
         message: "Unauthorized",
       });
     }
-    await auth.invalidateSession(session.id);
-
-    authRequest.deleteSessionCookie(); // for session cookie
+    await invalidateSession(session.id);
 
     return res.status(200).json({
       success: true,

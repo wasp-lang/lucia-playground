@@ -21,7 +21,7 @@ function User() {
       {user && (
         <div className="space-y-4 p-8 bg-gray-100 rounded-md">
           <h2 className="text-2xl font-bold">User Info</h2>
-          {user.auth.authProviders.map(
+          {user.auth.identities.map(
             (
               provider:
                 | {

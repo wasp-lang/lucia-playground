@@ -1,11 +1,13 @@
 import * as z from "zod";
+import { validateRequest } from "zod-express";
 import { Router } from "express";
 
-import { getSessionForAuthId } from "../utils.js";
-import { validateRequest } from "zod-express";
+import {
+  getSessionForAuthId,
+  findAuthIdentity,
+  verifyPassword,
+} from "../../sdk/index.js";
 import { isEmailVerificationRequired } from "./utils.js";
-import { findAuthProvider } from "../db.js";
-import { verifyPassword } from "../passwords.js";
 
 export function setupLogin(router: Router) {
   router.post(
@@ -22,19 +24,19 @@ export function setupLogin(router: Router) {
       const { email, password } = req.body;
 
       try {
-        const authProvider = await findAuthProvider(
+        const authIdentity = await findAuthIdentity(
           "email",
           email.toLowerCase()
         );
 
-        if (!authProvider) {
+        if (!authIdentity) {
           return res.status(400).json({
             success: false,
             message: "Incorrect email or password",
           });
         }
 
-        const hashedPassword = (authProvider.providerData as any)
+        const hashedPassword = (authIdentity.providerData as any)
           .hashedPassword;
         const passwordMatches = await verifyPassword({
           hash: hashedPassword,
@@ -50,7 +52,7 @@ export function setupLogin(router: Router) {
 
         if (
           isEmailVerificationRequired &&
-          !(authProvider.providerData as any).isEmailVerified
+          !(authIdentity.providerData as any).isEmailVerified
         ) {
           return res.status(400).json({
             success: false,
@@ -59,7 +61,7 @@ export function setupLogin(router: Router) {
         } else {
           // await putUserInSession(key.userId, req, res);
 
-          const session = await getSessionForAuthId(authProvider.authId);
+          const session = await getSessionForAuthId(authIdentity.authId);
 
           return res.json({
             success: true,

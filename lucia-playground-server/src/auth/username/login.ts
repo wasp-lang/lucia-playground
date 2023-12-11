@@ -1,10 +1,12 @@
 import * as z from "zod";
 import { Router } from "express";
-
-import { getSessionForAuthId } from "../utils.js";
 import { validateRequest } from "zod-express";
-import { findAuthProvider } from "../db.js";
-import { verifyPassword } from "../passwords.js";
+
+import {
+  getSessionForAuthId,
+  findAuthIdentity,
+  verifyPassword,
+} from "../../sdk/index.js";
 
 export function setupLogin(router: Router) {
   router.post(
@@ -21,18 +23,18 @@ export function setupLogin(router: Router) {
       const { username, password } = req.body;
 
       try {
-        const usernameAuthProvider = await findAuthProvider(
+        const authIdentity = await findAuthIdentity(
           "username",
           username.toLowerCase()
         );
-        if (!usernameAuthProvider) {
+        if (!authIdentity) {
           return res.status(401).json({
             success: false,
             message: "Invalid username or password",
           });
         }
 
-        const hashedPassword = (usernameAuthProvider.providerData as any)
+        const hashedPassword = (authIdentity.providerData as any)
           .hashedPassword;
 
         if (!hashedPassword) {
@@ -54,7 +56,7 @@ export function setupLogin(router: Router) {
           });
         }
 
-        const session = await getSessionForAuthId(usernameAuthProvider.authId);
+        const session = await getSessionForAuthId(authIdentity.authId);
 
         return res.json({
           success: true,

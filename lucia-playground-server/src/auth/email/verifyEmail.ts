@@ -1,9 +1,12 @@
 import * as z from "zod";
 import { Router } from "express";
-
 import { validateRequest } from "zod-express";
-import { verifyToken } from "../utils.js";
-import { findAuthProvider, updateProviderData } from "../db.js";
+
+import {
+  verifyToken,
+  findAuthIdentity,
+  updateProviderData,
+} from "../../sdk/index.js";
 
 export function setupVerifyEmail(router: Router) {
   router.get(
@@ -18,12 +21,12 @@ export function setupVerifyEmail(router: Router) {
       try {
         const { email } = verifyToken<{ email: string }>(token);
 
-        const authProvider = await findAuthProvider(
+        const authIdentity = await findAuthIdentity(
           "email",
           email.toLowerCase()
         );
 
-        if (!authProvider) {
+        if (!authIdentity) {
           return res.status(400).json({
             success: false,
             message: "Incorrect email or password",
@@ -31,10 +34,10 @@ export function setupVerifyEmail(router: Router) {
         }
 
         await updateProviderData(
-          authProvider.providerId,
-          authProvider.providerUserId,
+          authIdentity.providerId,
+          authIdentity.providerUserId,
           {
-            ...(authProvider.providerData as any),
+            ...(authIdentity.providerData as any),
             emailVerificationSentAt: null,
             isEmailVerified: true,
           }

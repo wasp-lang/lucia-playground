@@ -1,9 +1,8 @@
 import * as z from "zod";
 import { Router } from "express";
-
 import { validateRequest } from "zod-express";
-import { createAuth } from "../db.js";
-import { hashPassword } from "../passwords.js";
+
+import { createAuth, hashPassword } from "../../sdk/index.js";
 
 export function setupSignup(router: Router) {
   router.post(

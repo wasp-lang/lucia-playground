@@ -1,18 +1,18 @@
 import * as z from "zod";
 import { Router } from "express";
-
-import { createToken } from "../utils.js";
 import { validateRequest } from "zod-express";
-import { isEmailVerificationRequired, sendEmail } from "./utils.js";
-import { env } from "../../env.js";
+
 import {
+  createToken,
   createAuth,
   deleteUser,
   findAuth,
-  findAuthProvider,
+  findAuthIdentity,
   updateProviderData,
-} from "../db.js";
-import { hashPassword } from "../passwords.js";
+  hashPassword,
+} from "../../sdk/index.js";
+import { isEmailVerificationRequired, sendEmail } from "./utils.js";
+import { env } from "../../env.js";
 
 export function setupSignup(router: Router) {
   router.post(
@@ -33,22 +33,22 @@ export function setupSignup(router: Router) {
       if (isEmailVerificationRequired) {
         try {
           // const key = await auth.getKey("email", email.toLowerCase());
-          const authProvider = await findAuthProvider(
+          const authIdentity = await findAuthIdentity(
             "email",
             email.toLowerCase()
           );
 
-          if (!authProvider) {
+          if (!authIdentity) {
             throw new Error("User not found");
           }
 
-          const auth = await findAuth(authProvider.authId);
+          const auth = await findAuth(authIdentity.authId);
 
           if (!auth) {
             throw new Error("User not found");
           }
 
-          if (!(authProvider.providerData as any).isEmailVerified) {
+          if (!(authIdentity.providerData as any).isEmailVerified) {
             await deleteUser(auth.userId);
           }
         } catch (e) {
@@ -69,13 +69,13 @@ export function setupSignup(router: Router) {
           });
 
           // TODO: is there a way to directly update the data without fetching it first?
-          const authProvider = await findAuthProvider(
+          const authIdentity = await findAuthIdentity(
             "email",
             email.toLowerCase()
           );
 
           await updateProviderData("email", email.toLowerCase(), {
-            ...(authProvider?.providerData as any),
+            ...(authIdentity?.providerData as any),
             emailVerificationSentAt: new Date(),
           });
 

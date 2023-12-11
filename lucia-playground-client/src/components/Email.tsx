@@ -4,7 +4,7 @@ import { Button, Label, TextInput } from "flowbite-react";
 
 import { useAuth } from "../auth";
 import { Status, useStatus } from "./Status";
-import { getFirstZodValidationError, isZodValidationError } from "../utils";
+import { getFirstZodValidationError, isZodValidationError } from "../utils.js";
 import { useState } from "react";
 
 export function SignupForm() {

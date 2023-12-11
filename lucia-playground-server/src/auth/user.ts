@@ -1,13 +1,16 @@
 import { Router } from "express";
 
 import { prismaClient } from "../prisma.js";
-import { AuthProvider } from "@prisma/client";
-import { auth } from "../lucia.js";
+import { AuthIdentity } from "@prisma/client";
+import { getSessionFromBearerToken } from "../sdk/index.js";
 
 export function setupCurrentUser(router: Router) {
   router.get("/user", async (req, res) => {
-    const authRequest = auth.handleRequest(req, res);
-    const { session, user } = await authRequest.validateBearerToken();
+    const { session, user } = await getSessionFromBearerToken(req);
+
+    console.log("session", session);
+    console.log("user", user);
+
     if (!session || !user) {
       return res.status(401).json({
         success: false,
@@ -24,7 +27,7 @@ export function setupCurrentUser(router: Router) {
       include: {
         auth: {
           include: {
-            authProviders: true,
+            identities: true,
           },
         },
       },
@@ -38,8 +41,8 @@ export function setupCurrentUser(router: Router) {
     }
 
     if (businessLogicUser.auth) {
-      businessLogicUser.auth.authProviders = scrubAuthProviderData(
-        businessLogicUser.auth.authProviders
+      businessLogicUser.auth.identities = scrubAuthIdentityData(
+        businessLogicUser.auth.identities
       );
     }
 
@@ -47,15 +50,15 @@ export function setupCurrentUser(router: Router) {
   });
 }
 
-function scrubAuthProviderData(authProviders: AuthProvider[]) {
-  return authProviders.map((authProvider) => {
+function scrubAuthIdentityData(identities: AuthIdentity[]) {
+  return identities.map((identity) => {
     // If providerData contains hashedPassword, remove it
 
-    const providerData = authProvider.providerData as any;
+    const providerData = identity.providerData as any;
     if (providerData.hashedPassword) {
       delete providerData.hashedPassword;
     }
 
-    return authProvider;
+    return identity;
   });
 }

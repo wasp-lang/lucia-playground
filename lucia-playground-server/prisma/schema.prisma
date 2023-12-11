@@ -21,30 +21,34 @@ model User {
 model Auth {
   id String @id @default(uuid())
 
+  // References the business logic model
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  auth_session  Session[]
-  authProviders AuthProvider[]
+  sessions   Session[]
+  identities AuthIdentity[]
 }
 
 model Session {
   id        String   @id @unique
-  userId    String
   expiresAt DateTime
-  auth      Auth     @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  // Needs to be called `userId` for Lucia to be able to create sessions
+  userId String
+  // Needs to be called `auth` for Lucia to be able to get sessions
+  auth   Auth   @relation(references: [id], fields: [userId], onDelete: Cascade)
 
   @@index([userId])
 }
 
-model AuthProvider {
-  id String @id @default(uuid())
-
+model AuthIdentity {
   providerId     String
   providerUserId String
 
   providerData Json @default("{}")
 
   authId String
-  auth   Auth   @relation(fields: [authId], references: [id])
+  auth   Auth   @relation(fields: [authId], references: [id], onDelete: Cascade)
+
+  @@id([providerId, providerUserId])
 }

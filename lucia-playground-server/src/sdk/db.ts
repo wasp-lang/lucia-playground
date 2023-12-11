@@ -7,7 +7,7 @@ export function createAuth(
 ) {
   return prismaClient.auth.create({
     data: {
-      authProviders: {
+      identities: {
         create: {
           providerId,
           providerUserId,
@@ -22,8 +22,8 @@ export function createAuth(
   });
 }
 
-export function findAuthProvider(providerId: string, providerUserId: string) {
-  return prismaClient.authProvider.findFirst({
+export function findAuthIdentity(providerId: string, providerUserId: string) {
+  return prismaClient.authIdentity.findFirst({
     where: {
       providerId,
       providerUserId,
@@ -60,7 +60,7 @@ export function updateProviderData(
   providerUserId: string,
   providerData: Record<string, any>
 ) {
-  return prismaClient.authProvider.updateMany({
+  return prismaClient.authIdentity.updateMany({
     where: {
       providerId,
       providerUserId,
@@ -69,4 +69,20 @@ export function updateProviderData(
       providerData,
     },
   });
+}
+
+export async function findOrCreateAuthByAuthIdentity(
+  providerName: string,
+  providerUserId: string,
+  providerData: Record<string, any>
+) {
+  const existingAuthIdentity = await findAuthIdentity(
+    providerName,
+    providerUserId
+  );
+  if (existingAuthIdentity) {
+    return findAuth(existingAuthIdentity.authId);
+  }
+  const auth = await createAuth(providerName, providerUserId, providerData);
+  return auth;
 }
