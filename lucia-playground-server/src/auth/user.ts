@@ -8,9 +8,6 @@ export function setupCurrentUser(router: Router) {
   router.get("/user", async (req, res) => {
     const { session, user } = await getSessionFromBearerToken(req);
 
-    console.log("session", session);
-    console.log("user", user);
-
     if (!session || !user) {
       return res.status(401).json({
         success: false,

@@ -2,7 +2,11 @@ import * as z from "zod";
 import { Router } from "express";
 import { validateRequest } from "zod-express";
 
-import { getSessionForAuthId, tokenStore, findAuth } from "../../sdk/index.js";
+import {
+  createSessionForAuthId,
+  tokenStore,
+  findAuth,
+} from "../../sdk/index.js";
 
 export function setupExchangeCode(router: Router) {
   router.post(
@@ -35,7 +39,7 @@ export function setupExchangeCode(router: Router) {
           });
         }
 
-        const session = await getSessionForAuthId(auth.id);
+        const session = await createSessionForAuthId(auth.id);
 
         tokenStore.markUsed(code);
 

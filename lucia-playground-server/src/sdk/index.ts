@@ -1,10 +1,10 @@
 export {
-  getSessionForAuthId,
-  createToken,
-  verifyToken,
+  createSessionForAuthId,
   getSessionFromBearerToken,
   invalidateSession,
-} from "./utils.js";
+} from "./session.js";
+
+export { createToken, verifyToken } from "./jwt.js";
 
 export {
   createAuth,

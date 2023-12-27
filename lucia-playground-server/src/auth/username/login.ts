@@ -3,7 +3,7 @@ import { Router } from "express";
 import { validateRequest } from "zod-express";
 
 import {
-  getSessionForAuthId,
+  createSessionForAuthId,
   findAuthIdentity,
   verifyPassword,
 } from "../../sdk/index.js";
@@ -56,7 +56,7 @@ export function setupLogin(router: Router) {
           });
         }
 
-        const session = await getSessionForAuthId(authIdentity.authId);
+        const session = await createSessionForAuthId(authIdentity.authId);
 
         return res.json({
           success: true,

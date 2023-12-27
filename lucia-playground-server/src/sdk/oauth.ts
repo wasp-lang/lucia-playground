@@ -3,7 +3,7 @@ import {
   Response as ExpressResponse,
 } from "express";
 import { env } from "../env.js";
-import { createToken, verifyToken } from "./utils.js";
+import { createToken, verifyToken } from "./jwt.js";
 import { parseCookies } from "oslo/cookie";
 
 export function getRedirectUri(providerName: string) {
