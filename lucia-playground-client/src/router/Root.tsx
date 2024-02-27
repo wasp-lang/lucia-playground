@@ -38,7 +38,7 @@ export function Root() {
         <footer>
           <div className="flex justify-center space-x-4">
             <a
-              href="https://github.com/wasp-lang/lucia-playground/tree/lucia-v3"
+              href="https://github.com/wasp-lang/lucia-playground/tree/master"
               target="_blank"
               rel="noopener noreferrer"
             >
