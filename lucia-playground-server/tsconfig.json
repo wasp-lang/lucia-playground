@@ -6,9 +6,5 @@
     "outDir": "dist",
     "rootDir": "src",
   },
-  "ts-node": {
-    "esm": true,
-    "swc": true,
-  },
   "include": ["src"]
 }
