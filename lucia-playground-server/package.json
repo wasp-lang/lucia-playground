@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "npx prisma migrate deploy && tsc --noEmit && TSIMP_DIAG=error node -r dotenv/config --import=tsimp/import ./src/index.ts",
+    "start": "npx prisma migrate deploy && tsc --noEmit && TSIMP_DIAG=error node -r dotenv/config --loader=tsimp/loader ./src/index.ts",
     "dev": "nodemon ./src/index.ts"
   },
   "keywords": [],
@@ -22,7 +22,6 @@
     "nodemon": "^2.0.22",
     "prisma": "^5.6.0",
     "regenerator-runtime": "^0.13.11",
-    "tsimp": "^2.0.11",
     "typescript": "5.2.2"
   },
   "dependencies": {
@@ -34,6 +33,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucia": "^3.0.1",
     "oslo": "^0.23.5",
+    "tsimp": "^2.0.11",
     "zod": "^3.22.4",
     "zod-express": "^0.0.8"
   }

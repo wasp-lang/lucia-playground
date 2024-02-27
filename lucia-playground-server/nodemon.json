@@ -3,5 +3,5 @@
         "./src/**/*.ts",
         ".env"
     ],
-    "exec": "TSIMP_DIAG=error node -r dotenv/config --import=tsimp/import"
+    "exec": "TSIMP_DIAG=error node -r dotenv/config --loader=tsimp/loader"
 }
