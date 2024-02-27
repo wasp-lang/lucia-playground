@@ -21,6 +21,15 @@ const envSchema = z.object({
   DISCORD_CLIENT_SECRET: z.string({
     required_error: "DISCORD_CLIENT_SECRET is required",
   }),
+  KEYCLOAK_CLIENT_ID: z.string({
+    required_error: "KEYCLOAK_CLIENT_ID is required",
+  }),
+  KEYCLOAK_CLIENT_SECRET: z.string({
+    required_error: "KEYCLOAK_CLIENT_SECRET is required",
+  }),
+  KEYCLOAK_REALM_URL: z.string({
+    required_error: "KEYCLOAK_REALM_URL is required",
+  }),
   SERVER_URL: z.string({
     required_error: "SERVER_URL is required",
   }),

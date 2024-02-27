@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@lucia-auth/adapter-prisma": "^4.0.0",
-    "arctic": "^0.10.0",
+    "arctic": "^1.2.1",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",

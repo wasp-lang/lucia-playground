@@ -22,6 +22,7 @@ function App() {
         <OAuthButton providerName="github" />
         <OAuthButton providerName="google" />
         <OAuthButton providerName="discord" />
+        <OAuthButton providerName="keycloak" />
         <Tabs.Group aria-label="Auth options" style="underline">
           <Tabs.Item active title="Login with Email">
             <Email.LoginForm />

@@ -20,6 +20,7 @@ import { setupRequestPasswordReset } from "./auth/email/requestPasswordReset.js"
 import { setupResetPassword } from "./auth/email/resetPassword.js";
 import { setupVerifyEmail } from "./auth/email/verifyEmail.js";
 import { setupExchangeCode } from "./auth/oauth/exchangeCode.js";
+import { setupKeycloak } from "./auth/oauth/keycloak.js";
 
 const app = express();
 
@@ -65,6 +66,9 @@ setupGithub(authRouter);
 
 // Discord
 setupDiscord(authRouter);
+
+// Keycloak
+setupKeycloak(authRouter);
 
 app.use("/auth", authRouter);
 
