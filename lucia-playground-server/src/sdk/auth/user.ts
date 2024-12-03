@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { prismaClient } from "../prisma.js";
 import { AuthIdentity } from "@prisma/client";
-import { getSessionFromBearerToken } from "../sdk/index.js";
+import { getSessionFromBearerToken } from "../index.js";
 
 export function setupCurrentUser(router: Router) {
   router.get("/user", async (req, res) => {

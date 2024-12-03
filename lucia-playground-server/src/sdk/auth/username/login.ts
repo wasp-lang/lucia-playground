@@ -6,7 +6,7 @@ import {
   createSessionForAuthId,
   findAuthIdentity,
   verifyPassword,
-} from "../../sdk/index.js";
+} from "../../index.js";
 
 export function setupLogin(router: Router) {
   router.post(

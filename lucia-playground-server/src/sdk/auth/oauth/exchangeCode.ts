@@ -2,11 +2,7 @@ import * as z from "zod";
 import { Router } from "express";
 import { validateRequest } from "zod-express";
 
-import {
-  createSessionForAuthId,
-  tokenStore,
-  findAuth,
-} from "../../sdk/index.js";
+import { createSessionForAuthId, tokenStore, findAuth } from "../../index.js";
 
 export function setupExchangeCode(router: Router) {
   router.post(

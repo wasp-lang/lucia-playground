@@ -10,7 +10,7 @@ import {
   findAuthIdentity,
   updateProviderData,
   hashPassword,
-} from "../../sdk/index.js";
+} from "../../index.js";
 import { isEmailVerificationRequired, sendEmail } from "./utils.js";
 import { env } from "../../env.js";
 

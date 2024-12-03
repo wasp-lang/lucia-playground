@@ -1,4 +1,4 @@
-import { prismaClient } from "../prisma.js";
+import { prismaClient } from "./prisma.js";
 
 export function createAuth(
   providerId: string,

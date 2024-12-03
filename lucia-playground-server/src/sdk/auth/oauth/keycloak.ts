@@ -6,7 +6,7 @@ import {
 import * as z from "zod";
 import { validateRequest } from "zod-express";
 
-import { Google, generateCodeVerifier, generateState } from "arctic";
+import { Keycloak, generateCodeVerifier, generateState } from "arctic";
 
 import {
   getCodeVerifierCookieName,
@@ -16,24 +16,25 @@ import {
   setValueInCookie,
   tokenStore,
   findOrCreateAuthIdentity,
-} from "../../sdk/index.js";
+} from "../../index.js";
 import { env } from "../../env.js";
 
-const providerName = "google";
+const providerName = "keycloak";
 
-const google = new Google(
-  env.GOOGLE_CLIENT_ID,
-  env.GOOGLE_CLIENT_SECRET,
+const keycloak = new Keycloak(
+  env.KEYCLOAK_REALM_URL,
+  env.KEYCLOAK_CLIENT_ID,
+  env.KEYCLOAK_CLIENT_SECRET,
   getRedirectUri(providerName)
 );
 
-export function setupGoogle(router: Router) {
+export function setupKeycloak(router: Router) {
   router.get(
     `/login/${providerName}`,
     async (_req: ExpressRequest, res: ExpressResponse) => {
       const state = generateState();
       const codeVerifier = generateCodeVerifier();
-      const url = await google.createAuthorizationURL(state, codeVerifier, {
+      const url = await keycloak.createAuthorizationURL(state, codeVerifier, {
         scopes: ["profile", "email"],
       });
       setValueInCookie(getStateCookieName(providerName), state, res);
@@ -86,19 +87,17 @@ export function setupGoogle(router: Router) {
       }
 
       try {
-        const { accessToken } = await google.validateAuthorizationCode(
+        const { accessToken } = await keycloak.validateAuthorizationCode(
           code,
           storedCodeVerifier
         );
 
-        const response = await fetch(
-          "https://openidconnect.googleapis.com/v1/userinfo",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const userInfoEndpoint = `${env.KEYCLOAK_REALM_URL}/protocol/openid-connect/userinfo`;
+        const response = await fetch(userInfoEndpoint, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         const userData = (await response.json()) as {
           id?: string;
           sub?: string;

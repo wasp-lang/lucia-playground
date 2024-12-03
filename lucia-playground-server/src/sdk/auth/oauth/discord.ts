@@ -3,46 +3,38 @@ import {
   Response as ExpressResponse,
   Router,
 } from "express";
-import * as z from "zod";
 import { validateRequest } from "zod-express";
+import * as z from "zod";
 
-import { Keycloak, generateCodeVerifier, generateState } from "arctic";
+import { Discord, generateState } from "arctic";
 
 import {
-  getCodeVerifierCookieName,
+  findOrCreateAuthIdentity,
   getRedirectUri,
   getStateCookieName,
   getValueFromCookie,
   setValueInCookie,
   tokenStore,
-  findOrCreateAuthIdentity,
-} from "../../sdk/index.js";
+} from "../../index.js";
 import { env } from "../../env.js";
 
-const providerName = "keycloak";
+const providerName = "discord";
 
-const keycloak = new Keycloak(
-  env.KEYCLOAK_REALM_URL,
-  env.KEYCLOAK_CLIENT_ID,
-  env.KEYCLOAK_CLIENT_SECRET,
+const discord = new Discord(
+  env.DISCORD_CLIENT_ID,
+  env.DISCORD_CLIENT_SECRET,
   getRedirectUri(providerName)
 );
 
-export function setupKeycloak(router: Router) {
+export function setupDiscord(router: Router) {
   router.get(
     `/login/${providerName}`,
     async (_req: ExpressRequest, res: ExpressResponse) => {
       const state = generateState();
-      const codeVerifier = generateCodeVerifier();
-      const url = await keycloak.createAuthorizationURL(state, codeVerifier, {
-        scopes: ["profile", "email"],
+      const url = await discord.createAuthorizationURL(state, {
+        scopes: ["identify", "email"],
       });
       setValueInCookie(getStateCookieName(providerName), state, res);
-      setValueInCookie(
-        getCodeVerifierCookieName(providerName),
-        codeVerifier,
-        res
-      );
       return res.status(302).setHeader("Location", url.toString()).end();
     }
   );
@@ -60,10 +52,6 @@ export function setupKeycloak(router: Router) {
         getStateCookieName(providerName),
         req
       );
-      const storedCodeVerifier = getValueFromCookie(
-        getCodeVerifierCookieName(providerName),
-        req
-      );
       const state = req.query.state;
       const code = req.query.code;
 
@@ -79,28 +67,14 @@ export function setupKeycloak(router: Router) {
         });
       }
 
-      if (!storedCodeVerifier) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid code verifier",
-        });
-      }
-
       try {
-        const { accessToken } = await keycloak.validateAuthorizationCode(
-          code,
-          storedCodeVerifier
-        );
+        const { accessToken } = await discord.validateAuthorizationCode(code);
 
-        const userInfoEndpoint = `${env.KEYCLOAK_REALM_URL}/protocol/openid-connect/userinfo`;
-        const response = await fetch(
-          userInfoEndpoint,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await fetch("https://discord.com/api/users/@me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         const userData = (await response.json()) as {
           id?: string;
           sub?: string;

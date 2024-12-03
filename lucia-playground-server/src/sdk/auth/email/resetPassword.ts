@@ -7,7 +7,7 @@ import {
   findAuthIdentity,
   updateProviderData,
   hashPassword,
-} from "../../sdk/index.js";
+} from "../../index.js";
 
 export function setupResetPassword(router: Router) {
   router.post(

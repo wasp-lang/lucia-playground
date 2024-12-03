@@ -6,7 +6,7 @@ import {
   verifyToken,
   findAuthIdentity,
   updateProviderData,
-} from "../../sdk/index.js";
+} from "../../index.js";
 
 export function setupVerifyEmail(router: Router) {
   router.get(

@@ -13,7 +13,7 @@ import {
   setValueInCookie,
   tokenStore,
   findOrCreateAuthIdentity,
-} from "../../sdk/index.js";
+} from "../../index.js";
 import { env } from "../../env.js";
 
 const providerName = "github";

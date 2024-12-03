@@ -2,7 +2,7 @@ import * as z from "zod";
 import { Router } from "express";
 import { validateRequest } from "zod-express";
 
-import { createAuth, hashPassword } from "../../sdk/index.js";
+import { createAuth, hashPassword } from "../../index.js";
 
 export function setupSignup(router: Router) {
   router.post(

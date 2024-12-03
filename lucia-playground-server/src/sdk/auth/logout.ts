@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSessionFromBearerToken, invalidateSession } from "../sdk/index.js";
+import { getSessionFromBearerToken, invalidateSession } from "../index.js";
 
 export function setupLogout(router: Router) {
   router.post("/logout", async (req, res) => {

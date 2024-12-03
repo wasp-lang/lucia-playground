@@ -8,7 +8,7 @@ import {
   createToken,
   findAuthIdentity,
   updateProviderData,
-} from "../../sdk/index.js";
+} from "../../index.js";
 
 export function setupRequestPasswordReset(router: Router) {
   router.post(

@@ -1,3 +1,5 @@
+import "./polyfill.js";
+
 export {
   createSessionForAuthId,
   getSessionFromBearerToken,
@@ -26,3 +28,5 @@ export {
 } from "./oauth.js";
 
 export { hashPassword, verifyPassword } from "./passwords.js";
+
+export { setupAuth } from "./auth/index.js";
